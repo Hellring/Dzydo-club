@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, dev/** ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup PostgreSQL
+        uses: Harmon758/postgres-action@v2
+        with:
+          postgresql version: '13'
+          postgresql db: dzydo_club
+          postgresql user: postgres
+          postgresql password: postgres
+
+      - name: Wait for Postgres
+        run: npx wait-on tcp:5432 || sleep 5
+
+      - name: Set env
+        run: |
+          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/dzydo_club" >> $GITHUB_ENV
+          echo "JWT_ACCESS_SECRET=ci_access_secret" >> $GITHUB_ENV
+          echo "JWT_REFRESH_SECRET=ci_refresh_secret" >> $GITHUB_ENV
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Push DB schema
+        run: npx prisma db push
+
+      - name: Seed database
+        run: npm run db:seed
+
+      - name: Build
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+      - name: Lint
+        run: npm run lint || true
