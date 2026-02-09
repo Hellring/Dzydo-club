@@ -9,8 +9,25 @@ export async function createTenantSchema(schemaName: string) {
   const sqlPath = path.join(__dirname, '..', 'prisma', 'tenant_schema.sql');
   const template = await fs.readFile(sqlPath, 'utf-8');
   // Set search_path to the schema, then execute template
-  const sql = `SET search_path TO "${schemaName}", public;\n${template}`;
-  await prisma.$executeRawUnsafe(sql);
+  await prisma.$executeRawUnsafe(`SET search_path TO "${schemaName}", public`);
+  
+  // Split template into individual statements and execute each one
+  // Filter out empty lines and comments at statement level
+  const statements = template
+    .split(';')
+    .map(stmt => stmt.trim())
+    .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
+  
+  for (const statement of statements) {
+    if (statement.trim().length > 0) {
+      try {
+        await prisma.$executeRawUnsafe(statement);
+      } catch (e) {
+        console.error(`Failed to execute statement: ${statement.substring(0, 50)}...`, e);
+        throw e;
+      }
+    }
+  }
 }
 
 export async function setTenantMiddleware(req: Request, _res: Response, next: NextFunction) {

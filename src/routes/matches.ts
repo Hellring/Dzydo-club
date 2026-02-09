@@ -88,12 +88,12 @@ router.post('/:matchId/result', async (req, res) => {
   if (typeof winner === 'undefined' && typeof result === 'undefined') return res.status(400).json({ error: 'winner or result required' });
 
   try {
-    const existing = await prisma.$queryRawUnsafe(`SELECT * FROM "${schema}".matches WHERE id = $1`, matchId);
+    const existing: any = await prisma.$queryRawUnsafe(`SELECT * FROM "${schema}".matches WHERE id = $1`, matchId);
     if (!existing || existing.length === 0) return res.status(404).json({ error: 'match not found' });
 
     // update current match
     await prisma.$queryRawUnsafe(
-      `UPDATE "${schema}".matches SET winner = $1, result = $2 WHERE id = $3`,
+      `UPDATE "${schema}".matches SET winner = $1, result = $2::jsonb WHERE id = $3`,
       typeof winner === 'number' ? winner : null,
       result ? JSON.stringify(result) : null,
       matchId

@@ -5,8 +5,9 @@ export async function createInvitation(email: string, role: string, invitedBy?: 
   const token = crypto.randomBytes(16).toString('hex');
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
   // Insert into public invitations table
+  // Cast role string to PostgreSQL role type
   await prisma.$executeRawUnsafe(
-    `INSERT INTO invitations (email, role, token, expires_at, invited_by) VALUES ($1, $2, $3, $4, $5)`,
+    `INSERT INTO invitations (email, role, token, expires_at, invited_by) VALUES ($1, $2::role, $3, $4, $5)`,
     email,
     role,
     token,

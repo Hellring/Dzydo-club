@@ -21,6 +21,7 @@ model Club {
   name      String
   slug      String   @unique
   createdAt DateTime @default(now())
+  @@map("clubs")
 }
 
 model User {
@@ -31,6 +32,7 @@ model User {
   role          Role     @default(PARENT)
   refreshTokens RefreshToken[]
   createdAt     DateTime @default(now())
+  @@map("users")
 }
 
 model RefreshToken {
@@ -40,6 +42,7 @@ model RefreshToken {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt  DateTime
   createdAt  DateTime @default(now())
+  @@map("refresh_tokens")
 }
 
 model Invitation {
@@ -50,4 +53,5 @@ model Invitation {
   expiresAt  DateTime
   invitedBy  Int?
   createdAt  DateTime @default(now())
+  @@map("invitations")
 }
